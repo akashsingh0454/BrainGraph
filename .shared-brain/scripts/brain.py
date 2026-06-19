@@ -257,6 +257,10 @@ def scan_git_status():
             if filename.startswith('"') and filename.endswith('"'):
                 filename = filename[1:-1]
                 
+            # Exclude files inside .shared-brain folder
+            if ".shared-brain" in filename:
+                continue
+                
             if status_code[0] in ('M', 'A', 'D', 'R', 'C'):
                 staged.append((status_code[0], filename))
             if status_code[1] == 'M' or status_code[1] == 'D':
@@ -269,7 +273,8 @@ def scan_git_status():
 
 def get_git_diff():
     try:
-        diff = subprocess.check_output(["git", "diff"], text=True, stderr=subprocess.DEVNULL)
+        # Exclude .shared-brain files from git diff
+        diff = subprocess.check_output(["git", "diff", "--", ":!.shared-brain"], text=True, stderr=subprocess.DEVNULL)
         return diff
     except Exception:
         return ""
@@ -278,7 +283,8 @@ def get_last_commit_wip():
     try:
         msg = subprocess.check_output(["git", "log", "-1", "--pretty=%s"], text=True, stderr=subprocess.DEVNULL).strip()
         if "wip" in msg.lower():
-            diff = subprocess.check_output(["git", "diff", "HEAD~1", "HEAD"], text=True, stderr=subprocess.DEVNULL)
+            # Exclude .shared-brain files from WIP commit diff
+            diff = subprocess.check_output(["git", "diff", "HEAD~1", "HEAD", "--", ":!.shared-brain"], text=True, stderr=subprocess.DEVNULL)
             return msg, diff
     except Exception:
         pass
