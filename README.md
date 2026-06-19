@@ -1,20 +1,41 @@
-# Shared Brain: Multi-Agent Handoff System
+# BrainGraph: Contextual Multi-Agent Handoff & Impact Analysis System
 
-This repository provides a unified handoff system ("Shared Brain") to enable seamless project state and task resumption across multiple AI coding agents, including **Claude Code**, **Windsurf (Cascade)**, **Cursor**, **Antigravity**, **GitHub Copilot**, **Aider**, **Roo Code/Cline**, and more.
+![BrainGraph Architecture](braingraph_architecture.png)
 
-It is particularly useful for switching between different AI tools or across multiple devices without losing context or leaving work half-done.
+**BrainGraph** is a unified handoff, process monitoring, and code graph impact analysis system. It enables seamless task and context resumption across multiple AI coding agents, including **Claude Code**, **Windsurf (Cascade)**, **Cursor**, **Antigravity**, **GitHub Copilot**, **Aider**, **Roo Code/Cline**, and more.
+
+It is designed to solve **context drift**, **billing limit exhaustion**, and **multi-device synchronization** by capturing active intents, uncommitted diffs, and traversing your AST dependency call graph.
 
 ---
 
-## Quick Start
+## Architecture Overview
 
-### 1. How It Works
-The system uses:
-1. **Startup Rules Configuration**: Agent rule files (`CLAUDE.md`, `.cursorrules`, etc.) are placed in the root directory to automatically instruct any active agent to read the current task and handoff state before starting.
-2. **Central State Folder (`.shared-brain/`)**: Houses the active task description (`active_task.md`), the latest handoff details (`handoff.md`), and the live, cross-device synced chat history (`temp_chat_history.md`).
-3. **CLI Sync Utility (`.shared-brain/scripts/brain.py`)**: A standalone, zero-dependency Python script to manage tasks and automatically reconstruct context from git changes, WIP commits, local agent logs (e.g. Antigravity transcripts), and files modified on the filesystem.
+BrainGraph operates on three distinct layers:
+1. **Structural Code Graph**: Parses AST relationships (using Graphify's `graph.json` output) to map file and symbol dependencies.
+2. **Workspace Modifications Tracker**: Detects staged/unstaged changes, untracked files, and recent WIP commits.
+3. **Intent & History Log**: Maintains a single source of truth for task goals (`active_task.md`) and a synced cross-device turn-based history (`temp_chat_history.md`).
 
-For detailed setup and instructions, see the [.shared-brain README](file:///.shared-brain/README.md).
+---
+
+## Key Features
+
+### 1. Downstream Impact Profiling
+On task resumption, BrainGraph queries Graphify's static index. If you edited `auth.py`, it traverses the dependency graph in reverse and warns the incoming agent:
+> *The following downstream symbols depend on your changes: `run_app` (in `main.py`). Be careful when verifying.*
+It also automatically compiles a Mermaid diagram of the affected callflow in `.braingraph/active_graph.md`.
+
+### 2. The Process Watchdog (Limit Exhaustion Protection)
+When an agent starts, it registers its Process ID (PID). A background watchdog monitors the process:
+- If the agent terminates abruptly (e.g. runs out of LLM API credits or crashes) and leaves uncommitted work:
+  - It scans local transcripts for credit-exhaustion keywords (`429`, `limit`, `quota`, `billing`).
+  - It auto-commits the work as `WIP: Auto-checkpoint (Agent terminated abruptly due to limit error)` and pushes it to GitHub.
+  - It marks the agent as **Exhausted** in `agents.json`.
+
+### 3. Interactive Agent Usage Console (`agents`)
+Displays an interactive CLI dashboard showing:
+- Available vs. Exhausted agents.
+- Turn-based usage counts dynamically parsed from `temp_chat_history.md`.
+- Options to toggle availability, set targets, or add manual offsets.
 
 ---
 
@@ -23,15 +44,18 @@ For detailed setup and instructions, see the [.shared-brain README](file:///.sha
 Run the control CLI inside your project:
 
 ```bash
-# Initialize Shared Brain rules and folder structures in any repository
-python .shared-brain/scripts/brain.py init
+# Initialize BrainGraph rules and folder structures
+python .braingraph/scripts/braingraph.py init
 
-# Start a new task
-python .shared-brain/scripts/brain.py start "Your Task Description"
+# Start a new task (automatically launches the watchdog)
+python .braingraph/scripts/braingraph.py start "Your Task Description"
 
-# Resume active task, scanning filesystem changes, git history, and harvesting chats
-python .shared-brain/scripts/brain.py resume
+# Compile context for the next agent, analyzing git edits & Graphify dependencies
+python .braingraph/scripts/braingraph.py resume
 
-# End session, archive active task/chat states, and generate a handoff file
-python .shared-brain/scripts/brain.py handoff
+# Manage agent availability and view Task Usage statistics
+python .braingraph/scripts/braingraph.py agents
+
+# Stop the watchdog, archive chat history, and write a handoff report
+python .braingraph/scripts/braingraph.py handoff
 ```
