@@ -10,136 +10,149 @@ from pathlib import Path
 RULES_TEMPLATES = {
     "CLAUDE.md": """# Claude Code Project Rules & Handoff Instructions
 
-Before doing any work, you MUST check if `.shared-brain/` contains active task details.
+Before doing any work, you MUST check if `.braingraph/` contains active task details.
 
 ## Startup Protocol
-1. Read `.shared-brain/active_task.md` and `.shared-brain/handoff.md` to see the current active task state.
-2. Read `.shared-brain/resume_context.md` if it exists.
+1. Read `.braingraph/active_task.md` and `.braingraph/handoff.md` to see the current active task state.
+2. Read `.braingraph/resume_context.md` if it exists.
+3. Register your process by running:
+   `python .braingraph/scripts/braingraph.py register`
 
 ## During Work
-1. Update `.shared-brain/active_task.md` as you complete tasks.
-2. Log key updates (1-2 sentences) of your progress to the bottom of `.shared-brain/temp_chat_history.md` with:
+1. Update `.braingraph/active_task.md` as you complete tasks.
+2. Log key updates (1-2 sentences) of your progress to the bottom of `.braingraph/temp_chat_history.md` with:
    `- **[Timestamp] [Claude]**: Summary of what you just did.`
    This is critical for multi-device sync and crash recovery!
 
 ## Handoff Protocol
 When you are finishing or if your context/limit is running low:
-- Run `python .shared-brain/scripts/brain.py handoff` to archive the task and prepare a clean handoff.
+- Run `python .braingraph/scripts/braingraph.py handoff` to archive the task and prepare a clean handoff.
 """,
     ".cursorrules": """# Cursor Agent Rules & Handoff Instructions
 
-Before doing any work, you MUST check if `.shared-brain/` contains active task details.
+Before doing any work, you MUST check if `.braingraph/` contains active task details.
 
 ## Startup Protocol
-1. Read `.shared-brain/active_task.md` and `.shared-brain/handoff.md` to see the current active task state.
-2. Read `.shared-brain/resume_context.md` if it exists.
+1. Read `.braingraph/active_task.md` and `.braingraph/handoff.md` to see the current active task state.
+2. Read `.braingraph/resume_context.md` if it exists.
+3. Register your process by running:
+   `python .braingraph/scripts/braingraph.py register`
 
 ## During Work
-1. Update `.shared-brain/active_task.md` as you complete tasks.
-2. Log key updates (1-2 sentences) of your progress to the bottom of `.shared-brain/temp_chat_history.md` with:
+1. Update `.braingraph/active_task.md` as you complete tasks.
+2. Log key updates (1-2 sentences) of your progress to the bottom of `.braingraph/temp_chat_history.md` with:
    `- **[Timestamp] [Cursor]**: Summary of what you just did.`
    This is critical for multi-device sync and crash recovery!
 
 ## Handoff Protocol
 When you are finishing or if your limits are running low:
-- Run `python .shared-brain/scripts/brain.py handoff` or ask the user to run it to archive the task and prepare a clean handoff.
+- Run `python .braingraph/scripts/braingraph.py handoff` or ask the user to run it to archive the task and prepare a clean handoff.
 """,
     ".windsurfrules": """# Windsurf Agent Rules & Handoff Instructions
 
-Before doing any work, you MUST check if `.shared-brain/` contains active task details.
+Before doing any work, you MUST check if `.braingraph/` contains active task details.
 
 ## Startup Protocol
-1. Read `.shared-brain/active_task.md` and `.shared-brain/handoff.md` to see the current active task state.
-2. Read `.shared-brain/resume_context.md` if it exists.
+1. Read `.braingraph/active_task.md` and `.braingraph/handoff.md` to see the current active task state.
+2. Read `.braingraph/resume_context.md` if it exists.
+3. Register your process by running:
+   `python .braingraph/scripts/braingraph.py register`
 
 ## During Work
-1. Update `.shared-brain/active_task.md` as you complete tasks.
-2. Log key updates (1-2 sentences) of your progress to the bottom of `.shared-brain/temp_chat_history.md` with:
+1. Update `.braingraph/active_task.md` as you complete tasks.
+2. Log key updates (1-2 sentences) of your progress to the bottom of `.braingraph/temp_chat_history.md` with:
    `- **[Timestamp] [Windsurf]**: Summary of what you just did.`
    This is critical for multi-device sync and crash recovery!
 
 ## Handoff Protocol
 When you are finishing or if your limits are running low:
-- Run `python .shared-brain/scripts/brain.py handoff` or ask the user to run it to archive the task and prepare a clean handoff.
+- Run `python .braingraph/scripts/braingraph.py handoff` or ask the user to run it to archive the task and prepare a clean handoff.
 """,
     ".agents/AGENTS.md": """# Antigravity Rules & Handoff Instructions
 
-Before doing any work, you MUST check if `.shared-brain/` contains active task details.
+Before doing any work, you MUST check if `.braingraph/` contains active task details.
 
 ## Startup Protocol
-1. Read `.shared-brain/active_task.md` and `.shared-brain/handoff.md` to see the current active task state.
-2. Read `.shared-brain/resume_context.md` if it exists.
+1. Read `.braingraph/active_task.md` and `.braingraph/handoff.md` to see the current active task state.
+2. Read `.braingraph/resume_context.md` if it exists.
+3. Register your process by running:
+   `python .braingraph/scripts/braingraph.py register`
 
 ## During Work
-1. Update `.shared-brain/active_task.md` as you complete tasks.
-2. Log key updates (1-2 sentences) of your progress to the bottom of `.shared-brain/temp_chat_history.md` with:
+1. Update `.braingraph/active_task.md` as you complete tasks.
+2. Log key updates (1-2 sentences) of your progress to the bottom of `.braingraph/temp_chat_history.md` with:
    `- **[Timestamp] [Antigravity]**: Summary of what you just did.`
    This is critical for multi-device sync and crash recovery!
 
 ## Handoff Protocol
 When you are finishing or if your limits are running low:
-- Run `python .shared-brain/scripts/brain.py handoff` or ask the user to run it to archive the task and prepare a clean handoff.
+- Run `python .braingraph/scripts/braingraph.py handoff` or ask the user to run it to archive the task and prepare a clean handoff.
 """,
     ".clinerules": """# Cline / Roo Code Rules & Handoff Instructions
 
-Before doing any work, you MUST check if `.shared-brain/` contains active task details.
+Before doing any work, you MUST check if `.braingraph/` contains active task details.
 
 ## Startup Protocol
-1. Read `.shared-brain/active_task.md` and `.shared-brain/handoff.md` to see the current active task state.
-2. Read `.shared-brain/resume_context.md` if it exists.
+1. Read `.braingraph/active_task.md` and `.braingraph/handoff.md` to see the current active task state.
+2. Read `.braingraph/resume_context.md` if it exists.
+3. Register your process by running:
+   `python .braingraph/scripts/braingraph.py register`
 
 ## During Work
-1. Update `.shared-brain/active_task.md` as you complete tasks.
-2. Log key updates (1-2 sentences) of your progress to the bottom of `.shared-brain/temp_chat_history.md` with:
+1. Update `.braingraph/active_task.md` as you complete tasks.
+2. Log key updates (1-2 sentences) of your progress to the bottom of `.braingraph/temp_chat_history.md` with:
    `- **[Timestamp] [Cline]**: Summary of what you just did.`
    This is critical for multi-device sync and crash recovery!
 
 ## Handoff Protocol
 When you are finishing or if your limits are running low:
-- Run `python .shared-brain/scripts/brain.py handoff` or ask the user to run it to archive the task and prepare a clean handoff.
+- Run `python .braingraph/scripts/braingraph.py handoff` or ask the user to run it to archive the task and prepare a clean handoff.
 """,
     ".aider.instruction.md": """# Aider Rules & Handoff Instructions
 
-Before doing any work, you MUST check if `.shared-brain/` contains active task details.
+Before doing any work, you MUST check if `.braingraph/` contains active task details.
 
 ## Startup Protocol
-1. Read `.shared-brain/active_task.md` and `.shared-brain/handoff.md` to see the current active task state.
-2. Read `.shared-brain/resume_context.md` if it exists.
+1. Read `.braingraph/active_task.md` and `.braingraph/handoff.md` to see the current active task state.
+2. Read `.braingraph/resume_context.md` if it exists.
+3. Register your process by running:
+   `python .braingraph/scripts/braingraph.py register`
 
 ## During Work
-1. Update `.shared-brain/active_task.md` as you complete tasks.
-2. Log key updates (1-2 sentences) of your progress to the bottom of `.shared-brain/temp_chat_history.md` with:
+1. Update `.braingraph/active_task.md` as you complete tasks.
+2. Log key updates (1-2 sentences) of your progress to the bottom of `.braingraph/temp_chat_history.md` with:
    `- **[Timestamp] [Aider]**: Summary of what you just did.`
    This is critical for multi-device sync and crash recovery!
 
 ## Handoff Protocol
 When you are finishing or if your limits are running low:
-- Run `python .shared-brain/scripts/brain.py handoff` or ask the user to run it to archive the task and prepare a clean handoff.
+- Run `python .braingraph/scripts/braingraph.py handoff` or ask the user to run it to archive the task and prepare a clean handoff.
 """,
     ".github/copilot-instructions.md": """# GitHub Copilot Rules & Handoff Instructions
 
-Before doing any work, you MUST check if `.shared-brain/` contains active task details.
+Before doing any work, you MUST check if `.braingraph/` contains active task details.
 
 ## Startup Protocol
-1. Read `.shared-brain/active_task.md` and `.shared-brain/handoff.md` to see the current active task state.
-2. Read `.shared-brain/resume_context.md` if it exists.
+1. Read `.braingraph/active_task.md` and `.braingraph/handoff.md` to see the current active task state.
+2. Read `.braingraph/resume_context.md` if it exists.
+3. Register your process by running:
+   `python .braingraph/scripts/braingraph.py register`
 
 ## During Work
-1. Update `.shared-brain/active_task.md` as you complete tasks.
-2. Log key updates (1-2 sentences) of your progress to the bottom of `.shared-brain/temp_chat_history.md` with:
+1. Update `.braingraph/active_task.md` as you complete tasks.
+2. Log key updates (1-2 sentences) of your progress to the bottom of `.braingraph/temp_chat_history.md` with:
    `- **[Timestamp] [Copilot]**: Summary of what you just did.`
    This is critical for multi-device sync and crash recovery!
 
 ## Handoff Protocol
 When you are finishing or if your limits are running low:
-- Run `python .shared-brain/scripts/brain.py handoff` or ask the user to run it to archive the task and prepare a clean handoff.
+- Run `python .braingraph/scripts/braingraph.py handoff` or ask the user to run it to archive the task and prepare a clean handoff.
 """
 }
 
 def get_parent_process_cmd():
     ppid = os.getppid()
     if os.name == 'nt':
-        # Windows
         try:
             cmd = f"wmic process where ProcessId={ppid} get CommandLine"
             res = subprocess.check_output(cmd, shell=True, text=True, stderr=subprocess.DEVNULL)
@@ -157,7 +170,6 @@ def get_parent_process_cmd():
         except Exception:
             pass
     else:
-        # Unix/Mac
         try:
             if os.path.exists(f"/proc/{ppid}/cmdline"):
                 with open(f"/proc/{ppid}/cmdline", "r") as f:
@@ -213,7 +225,7 @@ def scan_recent_files(root_dir, max_hours=4):
     recent_files = []
     now = datetime.datetime.now()
     ignore_dirs = {
-        '.git', 'node_modules', '.shared-brain', 'venv', '.env', 'dist', 'build', 
+        '.git', 'node_modules', '.braingraph', 'venv', '.env', 'dist', 'build', 
         '.next', '.venv', '.nuxt', 'target', 'bin', 'obj', '__pycache__', '.agents'
     }
     ignore_files = {
@@ -222,7 +234,6 @@ def scan_recent_files(root_dir, max_hours=4):
     }
     
     for dirpath, dirnames, filenames in os.walk(root_dir):
-        # Modify dirnames in-place to skip ignored directories
         dirnames[:] = [d for d in dirnames if d not in ignore_dirs and not d.startswith('.')]
         
         for f in filenames:
@@ -257,8 +268,7 @@ def scan_git_status():
             if filename.startswith('"') and filename.endswith('"'):
                 filename = filename[1:-1]
                 
-            # Exclude files inside .shared-brain folder
-            if ".shared-brain" in filename:
+            if ".braingraph" in filename:
                 continue
                 
             if status_code[0] in ('M', 'A', 'D', 'R', 'C'):
@@ -273,8 +283,7 @@ def scan_git_status():
 
 def get_git_diff():
     try:
-        # Exclude .shared-brain files from git diff
-        diff = subprocess.check_output(["git", "diff", "--", ":!.shared-brain"], text=True, stderr=subprocess.DEVNULL)
+        diff = subprocess.check_output(["git", "diff", "--", ":!.braingraph"], text=True, stderr=subprocess.DEVNULL)
         return diff
     except Exception:
         return ""
@@ -283,20 +292,16 @@ def get_last_commit_wip():
     try:
         msg = subprocess.check_output(["git", "log", "-1", "--pretty=%s"], text=True, stderr=subprocess.DEVNULL).strip()
         if "wip" in msg.lower():
-            # Exclude .shared-brain files from WIP commit diff
-            diff = subprocess.check_output(["git", "diff", "HEAD~1", "HEAD", "--", ":!.shared-brain"], text=True, stderr=subprocess.DEVNULL)
+            diff = subprocess.check_output(["git", "diff", "HEAD~1", "HEAD", "--", ":!.braingraph"], text=True, stderr=subprocess.DEVNULL)
             return msg, diff
     except Exception:
         pass
     return None, ""
 
 def harvest_antigravity_transcript(max_age_hours=4):
-    # Determine the Antigravity AppData folder
-    # On Windows, usually C:\Users\<Username>\.gemini\antigravity\brain
     user_home = str(Path.home())
     antigravity_brain_path = os.path.join(user_home, ".gemini", "antigravity", "brain")
     if not os.path.exists(antigravity_brain_path):
-        # Alternative Windows location
         app_data = os.environ.get("USERPROFILE", "")
         if app_data:
             antigravity_brain_path = os.path.join(app_data, ".gemini", "antigravity", "brain")
@@ -338,7 +343,7 @@ def harvest_antigravity_transcript(max_age_hours=4):
                 if step_type == "USER_INPUT":
                     turns.append(f"**User**: {content.strip()}")
                 elif step_type == "PLANNER_RESPONSE" or source == "MODEL":
-                    clean_content = re.sub(r'<[^>]+>', '', content) # strip internal tags
+                    clean_content = re.sub(r'<[^>]+>', '', content)
                     turns.append(f"**Agent**: {clean_content.strip()[:1000]}")
                     
                 if len(turns) >= 4:
@@ -359,7 +364,7 @@ def harvest_aider_history(root_dir):
     return None
 
 def harvest_temp_chat_history(root_dir):
-    path = os.path.join(root_dir, ".shared-brain", "temp_chat_history.md")
+    path = os.path.join(root_dir, ".braingraph", "temp_chat_history.md")
     if os.path.exists(path):
         try:
             with open(path, "r", encoding="utf-8") as f:
@@ -370,7 +375,7 @@ def harvest_temp_chat_history(root_dir):
 
 def load_agents_db():
     root = Path.cwd()
-    db_file = root / ".shared-brain" / "agents.json"
+    db_file = root / ".braingraph" / "agents.json"
     if db_file.exists():
         try:
             with open(db_file, "r", encoding="utf-8") as f:
@@ -380,7 +385,7 @@ def load_agents_db():
     return {
         "agents": {
             "Claude Code": {"status": "Available", "limit_type": "Message-based", "max_limit": 50, "reset_time_hours": 5, "last_used": None, "manual_offset": 0},
-            "Windsurf Cascade": {"status": "Available", "limit_type": "Premium quota", "max_limit": 500, "reset_time_hours": null, "last_used": None, "manual_offset": 0},
+            "Windsurf Cascade": {"status": "Available", "limit_type": "Premium quota", "max_limit": 500, "reset_time_hours": None, "last_used": None, "manual_offset": 0},
             "Antigravity": {"status": "Available", "limit_type": "Token-based", "max_limit": 100, "reset_time_hours": null, "last_used": None, "manual_offset": 0},
             "Cursor Copilot/Composer": {"status": "Available", "limit_type": "Premium fast", "max_limit": 500, "reset_time_hours": null, "last_used": None, "manual_offset": 0},
             "Aider": {"status": "Available", "limit_type": "Key-based", "max_limit": null, "reset_time_hours": null, "last_used": None, "manual_offset": 0}
@@ -389,7 +394,7 @@ def load_agents_db():
 
 def save_agents_db(db):
     root = Path.cwd()
-    sb_dir = root / ".shared-brain"
+    sb_dir = root / ".braingraph"
     sb_dir.mkdir(exist_ok=True)
     db_file = sb_dir / "agents.json"
     try:
@@ -400,7 +405,7 @@ def save_agents_db(db):
 
 def calculate_agent_usage(root_dir):
     usage = {}
-    path = os.path.join(root_dir, ".shared-brain", "temp_chat_history.md")
+    path = os.path.join(root_dir, ".braingraph", "temp_chat_history.md")
     if os.path.exists(path):
         try:
             with open(path, "r", encoding="utf-8") as f:
@@ -426,7 +431,7 @@ def cmd_agents():
     while True:
         usage = calculate_agent_usage(root)
         print("\n" + "=" * 65)
-        print("SHARED BRAIN: AGENT USAGE & AVAILABILITY STATUS")
+        print("BRAINGRAPH: AGENT USAGE & AVAILABILITY STATUS")
         print("=" * 65)
         
         agents_list = sorted(list(db["agents"].keys()))
@@ -438,11 +443,11 @@ def cmd_agents():
             color_end = ""
             if sys.stdout.isatty():
                 if status == "Available":
-                    color_start = "\033[92m" # Green
+                    color_start = "\033[92m"
                 elif status == "Exhausted":
-                    color_start = "\033[91m" # Red
+                    color_start = "\033[91m"
                 elif status == "Active":
-                    color_start = "\033[96m" # Cyan
+                    color_start = "\033[96m"
                 color_end = "\033[0m"
                 
             turns = usage.get(name, 0) + info.get("manual_offset", 0)
@@ -546,7 +551,7 @@ def is_pid_alive(pid):
 
 def cmd_register(pid_str=None, agent_name=None):
     root = Path.cwd()
-    sb_dir = root / ".shared-brain"
+    sb_dir = root / ".braingraph"
     sb_dir.mkdir(exist_ok=True)
     
     if pid_str:
@@ -567,10 +572,113 @@ def cmd_register(pid_str=None, agent_name=None):
         json.dump(data, f, indent=2)
     print(f"Registered active agent '{agent_name}' (PID {pid}).")
 
+# Graphify integration code
+def load_code_graph(root_dir):
+    graph_path = os.path.join(root_dir, "graphify-out", "graph.json")
+    if not os.path.exists(graph_path):
+        return None
+        
+    try:
+        with open(graph_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            
+        nodes = {}
+        raw_nodes = data.get("nodes", [])
+        if isinstance(raw_nodes, list):
+            for n in raw_nodes:
+                nid = n.get("id") or n.get("name")
+                if nid:
+                    nodes[nid] = n
+        elif isinstance(raw_nodes, dict):
+            nodes = raw_nodes
+            
+        edges = data.get("edges", [])
+        
+        file_to_nodes = {}
+        parents = {}
+        
+        for nid, val in nodes.items():
+            filepath = val.get("file") or val.get("path")
+            if filepath:
+                filepath = os.path.relpath(filepath, root_dir).replace('\\', '/')
+                file_to_nodes.setdefault(filepath, []).append(nid)
+                
+        for edge in edges:
+            src = edge.get("source")
+            tgt = edge.get("target")
+            relation = edge.get("relation") or ""
+            
+            if src and tgt:
+                parents.setdefault(tgt, []).append((src, relation))
+                
+        return {
+            "nodes": nodes,
+            "file_to_nodes": file_to_nodes,
+            "parents": parents
+        }
+    except Exception as e:
+        print(f"Warning: Could not parse Graphify JSON: {e}")
+    return None
+
+def analyze_downstream_impact(graph, modified_files, max_depth=2):
+    if not graph:
+        return None, ""
+        
+    nodes = graph["nodes"]
+    file_to_nodes = graph["file_to_nodes"]
+    parents = graph["parents"]
+    
+    affected_symbols = set()
+    relations = []
+    
+    for mf in modified_files:
+        mf_norm = mf.replace('\\', '/')
+        nids = file_to_nodes.get(mf_norm, [])
+        
+        visited = set(nids)
+        queue = [(nid, 0) for nid in nids]
+        
+        while queue:
+            curr, depth = queue.pop(0)
+            if depth >= max_depth:
+                continue
+                
+            for parent, relation in parents.get(curr, []):
+                if parent not in visited:
+                    visited.add(parent)
+                    queue.append((parent, depth + 1))
+                    
+                    p_info = nodes.get(parent, {})
+                    p_label = p_info.get("label") or parent
+                    p_file = p_info.get("file") or p_info.get("path") or ""
+                    if p_file:
+                        p_file = os.path.relpath(p_file, Path.cwd()).replace('\\', '/')
+                    
+                    affected_symbols.add((p_label, p_file))
+                    
+                    curr_info = nodes.get(curr, {})
+                    curr_label = curr_info.get("label") or curr
+                    relations.append((curr_label, p_label, relation))
+                    
+    mermaid = ""
+    if relations:
+        mermaid = "```mermaid\ngraph TD\n"
+        def clean(label):
+            return label.replace(':', '_').replace('.', '_').replace('-', '_').replace(' ', '_').replace('>', '_').replace('<', '_')
+            
+        for child, parent, rel in relations:
+            child_clean = clean(child)
+            parent_clean = clean(parent)
+            rel_label = f"|{rel}|" if rel else ""
+            mermaid += f'    {child_clean}["{child}"] -->{rel_label} {parent_clean}["{parent}"]\n'
+        mermaid += "```"
+        
+    return sorted(list(affected_symbols)), mermaid
+
 def cmd_watchdog():
     import time
     root = Path.cwd()
-    sb_dir = root / ".shared-brain"
+    sb_dir = root / ".braingraph"
     pid_file = sb_dir / "agent.pid"
     lock_file = sb_dir / "watchdog.lock"
     
@@ -703,7 +811,7 @@ def cmd_watchdog():
 
 def start_watchdog_background():
     root = Path.cwd()
-    script_path = root / ".shared-brain" / "scripts" / "brain.py"
+    script_path = root / ".braingraph" / "scripts" / "braingraph.py"
     try:
         if os.name == 'nt':
             subprocess.Popen(
@@ -724,7 +832,7 @@ def start_watchdog_background():
 
 def stop_watchdog():
     root = Path.cwd()
-    lock_file = root / ".shared-brain" / "watchdog.lock"
+    lock_file = root / ".braingraph" / "watchdog.lock"
     if lock_file.exists():
         try:
             with open(lock_file, "r") as f:
@@ -742,7 +850,7 @@ def stop_watchdog():
         except Exception:
             pass
             
-    pid_file = root / ".shared-brain" / "agent.pid"
+    pid_file = root / ".braingraph" / "agent.pid"
     if pid_file.exists():
         try:
             pid_file.unlink()
@@ -750,34 +858,31 @@ def stop_watchdog():
             pass
 
 def cmd_init():
-    print("Initializing Shared Brain configurations...")
+    print("==================================================")
+    print("Initializing BrainGraph Configuration Rules...")
+    print("==================================================")
     root = Path.cwd()
     
-    # 1. Create .shared-brain directory structure
-    sb_dir = root / ".shared-brain"
+    sb_dir = root / ".braingraph"
     sb_dir.mkdir(exist_ok=True)
     (sb_dir / "history").mkdir(exist_ok=True)
     (sb_dir / "scripts").mkdir(exist_ok=True)
     
-    # 2. Write rules files
     for name, content in RULES_TEMPLATES.items():
         filepath = root / name
-        # Create directories if needed
         filepath.parent.mkdir(parents=True, exist_ok=True)
         
-        # Don't overwrite if it already exists, just notify
         if filepath.exists():
             print(f"  Configuration file {name} already exists. Skipping.")
         else:
             filepath.write_text(content, encoding="utf-8")
             print(f"  Created {name}")
             
-    # Ensure active_task.md exists
     at_file = sb_dir / "active_task.md"
     if not at_file.exists():
         at_file.write_text("""# Active Task: [No active task loaded]
 
-Run `python .shared-brain/scripts/brain.py start "Task Name"` to begin.
+Run `python .braingraph/scripts/braingraph.py start \"Task Name\"` to begin.
 
 ## Goals & Requirements
 - [ ] Requirement 1
@@ -792,9 +897,8 @@ Run `python .shared-brain/scripts/brain.py start "Task Name"` to begin.
 ## Current Blockers & Notes
 - None.
 """, encoding="utf-8")
-        print("  Created .shared-brain/active_task.md")
+        print("  Created .braingraph/active_task.md")
         
-    # Ensure handoff.md exists
     ho_file = sb_dir / "handoff.md"
     if not ho_file.exists():
         ho_file.write_text("""# Handoff Session: [No active handoff]
@@ -811,26 +915,25 @@ No handoff data yet.
 ## Files Edited & Code Status
 - None.
 """, encoding="utf-8")
-        print("  Created .shared-brain/handoff.md")
+        print("  Created .braingraph/handoff.md")
         
-    # Ensure temp_chat_history.md exists
     tc_file = sb_dir / "temp_chat_history.md"
     if not tc_file.exists():
         tc_file.write_text("# Sync Chat History\n\n", encoding="utf-8")
-        print("  Created .shared-brain/temp_chat_history.md")
+        print("  Created .braingraph/temp_chat_history.md")
         
-    print("Shared Brain successfully initialized!")
+    # Copy the script to .braingraph/scripts/braingraph.py if it is running from elsewhere
+    print("\nBrainGraph successfully initialized!")
 
 def cmd_start(task_name):
     root = Path.cwd()
-    sb_dir = root / ".shared-brain"
+    sb_dir = root / ".braingraph"
     if not sb_dir.exists():
-        print("Error: .shared-brain not initialized. Run init first.")
+        print("Error: .braingraph not initialized. Run init first.")
         sys.exit(1)
         
     print(f"Starting task: {task_name}")
     
-    # Update active_task.md
     at_file = sb_dir / "active_task.md"
     at_content = f"""# Active Task: {task_name}
 
@@ -852,11 +955,9 @@ Started: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 """
     at_file.write_text(at_content, encoding="utf-8")
     
-    # Initialize temp_chat_history.md
     tc_file = sb_dir / "temp_chat_history.md"
     tc_file.write_text(f"# Sync Chat History - {task_name}\n\n", encoding="utf-8")
     
-    # Clear resume_context.md if exists
     rc_file = sb_dir / "resume_context.md"
     if rc_file.exists():
         rc_file.unlink()
@@ -866,9 +967,9 @@ Started: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 def cmd_resume():
     root = Path.cwd()
-    sb_dir = root / ".shared-brain"
+    sb_dir = root / ".braingraph"
     if not sb_dir.exists():
-        print("Error: .shared-brain not initialized. Run init first.")
+        print("Error: .braingraph not initialized. Run init first.")
         sys.exit(1)
         
     agent, ide = detect_environment()
@@ -893,36 +994,45 @@ def cmd_resume():
             
     print(f"==================================================")
     
-    # 2. Gather active task
     at_content = ""
     at_file = sb_dir / "active_task.md"
     if at_file.exists():
         at_content = at_file.read_text(encoding="utf-8")
         
-    # 3. Gather latest handoff
     ho_content = ""
     ho_file = sb_dir / "handoff.md"
     if ho_file.exists():
         ho_content = ho_file.read_text(encoding="utf-8")
         
-    # 4. Gather git changes
     staged, unstaged, untracked = scan_git_status()
     git_diff = get_git_diff()
-    
-    # 5. Gather local changes (modified in last 4 hours)
     recent_files = scan_recent_files(root)
-    
-    # 6. Gather WIP commit if any
     wip_msg, wip_diff = get_last_commit_wip()
     
-    # 7. Harvest conversation histories
     chat_history = harvest_temp_chat_history(root)
     antigravity_chat = harvest_antigravity_transcript()
     aider_chat = harvest_aider_history(root)
     
-    # Construct Consolidated Context Summary
+    # Load and process code graphify output
+    graph = load_code_graph(root)
+    modified_files = list(set([x[1] for x in staged + unstaged] + untracked))
+    for rf, t in recent_files:
+        modified_files.append(rf)
+    modified_files = list(set(modified_files))
+    
+    affected_symbols, mermaid_diagram = analyze_downstream_impact(graph, modified_files)
+    
+    # Save Mermaid diagram to active_graph.md
+    if mermaid_diagram:
+        graph_md = f"# Active Changes Callflow Map\n\nThis diagram maps your in-progress modifications and their downstream dependencies:\n\n{mermaid_diagram}\n"
+        with open(sb_dir / "active_graph.md", "w", encoding="utf-8") as f:
+            f.write(graph_md)
+    else:
+        if (sb_dir / "active_graph.md").exists():
+            (sb_dir / "active_graph.md").unlink()
+            
     lines = []
-    lines.append(f"# RESUME CONTEXT SUMMARY")
+    lines.append(f"# BRAINGRAPH RESUME CONTEXT SUMMARY")
     lines.append(f"*Generated on: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*")
     lines.append(f"*Target Agent: {agent} ({ide})*\n")
     
@@ -940,7 +1050,6 @@ def cmd_resume():
         lines.append("No manual handoff was registered.")
     lines.append("\n---\n")
     
-    # Modified Files / Workspace edits
     lines.append("## 3. Workspace Changes")
     if not staged and not unstaged and not untracked and not recent_files:
         if wip_msg:
@@ -961,17 +1070,24 @@ def cmd_resume():
             for f in untracked:
                 lines.append(f"- `[?]` {f}")
                 
-        # Recently modified filesystem edits (non-git specifically)
         filesystem_only = [rf for rf, t in recent_files if rf not in [x[1] for x in staged + unstaged] and rf not in untracked]
         if filesystem_only:
             lines.append("### Recently Autosaved/Modified Files (Last 4h, not staged/tracked):")
             for rf in filesystem_only:
                 lines.append(f"- `[filesystem]` {rf}")
                 
+    # Downstream Dependency Impact Analysis
+    if affected_symbols:
+        lines.append("\n### Downstream Impact Radius (Graphify AST callers):")
+        lines.append("The following symbols depend on the code you modified. Be careful when updating them:")
+        for sym, f in affected_symbols:
+            lines.append(f"- `{sym}` (in `{f}`)")
+        if mermaid_diagram:
+            lines.append("\n*Note: Visual call-flow map generated in `.braingraph/active_graph.md`*")
+            
     if git_diff.strip():
         lines.append("\n### Uncommitted Git Diff:")
         lines.append("```diff")
-        # Keep diff summary clean and short
         diff_lines = git_diff.split('\n')
         if len(diff_lines) > 50:
             lines.append("\n".join(diff_lines[:45]))
@@ -991,7 +1107,6 @@ def cmd_resume():
         lines.append("```")
     lines.append("\n---\n")
     
-    # Chat History
     lines.append("## 4. Conversation History / Context")
     has_chat_context = False
     
@@ -1016,36 +1131,32 @@ def cmd_resume():
     lines.append("\n---\n")
     lines.append("## 5. Resumption Instructions for Agent")
     lines.append(f"1. Please read this entire resume context carefully.")
-    lines.append(f"2. Inspect the files listed in **Workspace Changes**.")
+    lines.append(f"2. Inspect the files listed in **Workspace Changes** and check **Downstream Impact Radius**.")
     lines.append(f"3. Run any tests or build steps to ensure nothing is currently broken.")
     lines.append(f"4. Proceed to finish the remaining subtasks in `active_task.md`.")
-    lines.append(f"5. Maintain `.shared-brain/temp_chat_history.md` by logging your work.")
+    lines.append(f"5. Maintain `.braingraph/temp_chat_history.md` by logging your work.")
     
     context_md = "\n".join(lines)
     
-    # Save context to resume_context.md
     rc_file = sb_dir / "resume_context.md"
     rc_file.write_text(context_md, encoding="utf-8")
     
-    # Print console output
     print(context_md)
     print(f"\n==================================================")
-    print(f"Context compiled and saved to `.shared-brain/resume_context.md`.")
-    print(f"Incoming agent: please read `.shared-brain/resume_context.md` to begin.")
+    print(f"Context compiled and saved to `.braingraph/resume_context.md`.")
+    print(f"Incoming agent: please read `.braingraph/resume_context.md` to begin.")
     print(f"==================================================")
 
 def cmd_handoff():
     root = Path.cwd()
-    sb_dir = root / ".shared-brain"
+    sb_dir = root / ".braingraph"
     if not sb_dir.exists():
-        print("Error: .shared-brain not initialized. Run init first.")
+        print("Error: .braingraph not initialized. Run init first.")
         sys.exit(1)
         
     print("Generating Handoff...")
     
-    # 1. Ask for summary of accomplishments
     print("\nSummary of accomplishments (what did you finish?):")
-    # For automated agents running, they might write directly or we fallback
     accomplishments = ""
     if sys.stdin.isatty():
         try:
@@ -1055,20 +1166,17 @@ def cmd_handoff():
     if not accomplishments:
         accomplishments = "Agent session ended. Progress saved in git and active_task.md."
         
-    # Read active task
     at_file = sb_dir / "active_task.md"
     at_content = ""
     if at_file.exists():
         at_content = at_file.read_text(encoding="utf-8")
         
-    # Detect files edited
     staged, unstaged, untracked = scan_git_status()
     recent_files = scan_recent_files(root)
     files_edited = set([x[1] for x in staged + unstaged] + untracked)
     for rf, t in recent_files:
         files_edited.add(rf)
         
-    # Generate handoff.md
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     ho_content = f"""# Handoff Session: {timestamp}
 
@@ -1084,7 +1192,6 @@ Below was the active task state at the time of handoff:
 {at_content}
 ```
 """
-    # Archive previous handoff if it exists
     ho_file = sb_dir / "handoff.md"
     if ho_file.exists():
         old_ho = ho_file.read_text(encoding="utf-8")
@@ -1095,9 +1202,8 @@ Below was the active task state at the time of handoff:
             hist_ho_file.write_text(old_ho, encoding="utf-8")
             
     ho_file.write_text(ho_content, encoding="utf-8")
-    print(f"Handoff generated at `.shared-brain/handoff.md`")
+    print(f"Handoff generated at `.braingraph/handoff.md`")
     
-    # Archive active task
     if at_file.exists():
         old_at = at_file.read_text(encoding="utf-8")
         if "No active task loaded" not in old_at:
@@ -1106,7 +1212,6 @@ Below was the active task state at the time of handoff:
             hist_at_file = history_dir / f"task_{hist_ts}.md"
             hist_at_file.write_text(old_at, encoding="utf-8")
             
-    # Clean up temp_chat_history.md (archive it or merge it into the handoff history)
     tc_file = sb_dir / "temp_chat_history.md"
     if tc_file.exists():
         tc_content = tc_file.read_text(encoding="utf-8")
@@ -1117,7 +1222,6 @@ Below was the active task state at the time of handoff:
             hist_tc_file.write_text(tc_content, encoding="utf-8")
         tc_file.write_text("# Sync Chat History\n\n", encoding="utf-8")
         
-    # Clear resume_context.md on clean handoff
     rc_file = sb_dir / "resume_context.md"
     if rc_file.exists():
         rc_file.unlink()
@@ -1126,7 +1230,10 @@ Below was the active task state at the time of handoff:
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python brain.py [init | start <task> | resume | handoff | agents | register [pid] | watchdog]")
+        print("==================================================")
+        print("BRAINGRAPH CLI: Contextual Multi-Agent Handoff")
+        print("==================================================")
+        print("Usage: python braingraph.py [init | start <task> | resume | handoff | agents | register [pid] | watchdog]")
         print("\nCommands:")
         print("  init            Initialize configurations for all supported AI agents")
         print("  start <task>    Initialize a new active task")
@@ -1143,7 +1250,7 @@ def main():
         cmd_init()
     elif cmd == "start":
         if len(sys.argv) < 3:
-            print("Error: Please specify a task name. E.g. python brain.py start 'Fix authentication bug'")
+            print("Error: Please specify a task name. E.g. python braingraph.py start 'Fix authentication bug'")
             sys.exit(1)
         cmd_start(sys.argv[2])
     elif cmd == "resume":
