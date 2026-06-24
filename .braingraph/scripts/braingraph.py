@@ -575,6 +575,53 @@ def cmd_register(pid_str=None, agent_name=None):
 # Graphify integration code
 import ast
 
+def get_call_name(node_func):
+    if isinstance(node_func, ast.Name):
+        return node_func.id
+    elif isinstance(node_func, ast.Attribute):
+        val = get_call_name(node_func.value)
+        if val:
+            return f"{val}.{node_func.attr}"
+    return None
+
+def resolve_module_path(root_path, importing_file_rel_path, module_name, level):
+    # importing_file_rel_path is e.g. "a/b/c.py"
+    # level is int (0, 1, 2, ...)
+    # module_name is e.g. "auth.utils" or ""
+    
+    parts = Path(importing_file_rel_path).parent.parts
+    
+    if level > 0:
+        # relative import: go up (level - 1) directories from the parent of importing_file_rel_path
+        # level=1 means current directory, level=2 means parent directory, etc.
+        go_up = level - 1
+        if go_up <= len(parts):
+            base_parts = parts[:len(parts) - go_up]
+        else:
+            base_parts = ()
+    else:
+        # absolute import: search relative to project root
+        base_parts = ()
+        
+    # Append the module name path
+    if module_name:
+        mod_path_str = module_name.replace('.', '/')
+        full_rel_path = Path(*base_parts) / mod_path_str
+    else:
+        full_rel_path = Path(*base_parts)
+        
+    # Check options
+    options = [
+        f"{full_rel_path}.py",
+        f"{full_rel_path}/__init__.py"
+    ]
+    for opt in options:
+        opt_norm = opt.replace('\\', '/').lstrip('/')
+        if (root_path / opt_norm).exists():
+            return opt_norm
+            
+    return None
+
 class PythonDependencyVisitor(ast.NodeVisitor):
     def __init__(self, filepath, rel_path):
         self.filepath = filepath
@@ -597,15 +644,16 @@ class PythonDependencyVisitor(ast.NodeVisitor):
         for alias in node.names:
             name = alias.name
             asname = alias.asname or name
-            self.local_scope[asname] = ("module", name)
+            self.local_scope[asname] = ("module", 0, name)
         self.generic_visit(node)
         
     def visit_ImportFrom(self, node):
         module = node.module or ""
+        level = node.level or 0
         for alias in node.names:
             name = alias.name
             asname = alias.asname or name
-            self.local_scope[asname] = ("from_module", module, name)
+            self.local_scope[asname] = ("from_module", level, module, name)
         self.generic_visit(node)
         
     def visit_ClassDef(self, node):
@@ -643,13 +691,9 @@ class PythonDependencyVisitor(ast.NodeVisitor):
         caller_sym = self.get_current_symbol_id()
         self.calls.setdefault(caller_sym, [])
         
-        if isinstance(node.func, ast.Name):
-            callee_name = node.func.id
+        callee_name = get_call_name(node.func)
+        if callee_name:
             self.calls[caller_sym].append(callee_name)
-        elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
-            obj_name = node.func.value.id
-            attr_name = node.func.attr
-            self.calls[caller_sym].append(f"{obj_name}.{attr_name}")
             
         self.generic_visit(node)
 
@@ -690,62 +734,128 @@ def parse_python_project(root_dir):
             "file": visitor.rel_path
         }
         
-    def resolve_module_file(module_name):
-        p = module_name.replace('.', '/')
-        options = [f"{p}.py", f"{p}/__init__.py"]
-        for opt in options:
-            if (root_path / opt).exists():
-                return opt
-        return None
-        
     resolved_edges = []
     
     for visitor in visitors:
         for caller, callees in visitor.calls.items():
             for callee in callees:
                 target_sym = None
+                parts = callee.split('.')
                 
-                if '.' not in callee:
-                    if callee in visitor.local_scope:
-                        scope_info = visitor.local_scope[callee]
-                        if scope_info[0] == "from_module":
-                            _, mod_name, sym_name = scope_info
-                            mod_file = resolve_module_file(mod_name)
-                            if mod_file:
-                                target_sym = f"{mod_file}::{sym_name}"
-                                if target_sym not in all_definitions:
-                                    matching_syms = [s for s in all_definitions if s.startswith(f"{mod_file}::") and s.endswith(f"::{sym_name}")]
-                                    if matching_syms:
-                                        target_sym = matching_syms[0]
+                # Case 1: Call on self, e.g. self.method()
+                if parts[0] == "self" and len(parts) > 1 and visitor.current_class:
+                    local_target = f"{visitor.rel_path}::{visitor.current_class}::{parts[1]}"
+                    if local_target in all_definitions:
+                        target_sym = local_target
+                
+                # Case 2: Check if any prefix of the call chain is in local_scope
+                if not target_sym:
+                    # Find longest prefix match
+                    match_len = 0
+                    match_info = None
+                    for i in range(1, len(parts) + 1):
+                        prefix = ".".join(parts[:i])
+                        if prefix in visitor.local_scope:
+                            match_len = i
+                            match_info = visitor.local_scope[prefix]
+                            
+                    if match_info:
+                        suffix = parts[match_len:]
+                        if match_info[0] == "from_module":
+                            _, level, mod_name, sym_name = match_info
+                            
+                            # We imported sym_name from mod_name
+                            # It could be a submodule or a symbol inside mod_name
+                            is_submodule = False
+                            extended_mod_name = f"{mod_name}.{sym_name}" if mod_name else sym_name
+                            sub_mod_file = resolve_module_path(root_path, visitor.rel_path, extended_mod_name, level)
+                            
+                            if sub_mod_file:
+                                base_sym = sub_mod_file
+                                is_submodule = True
+                            else:
+                                mod_file = resolve_module_path(root_path, visitor.rel_path, mod_name, level)
+                                base_sym = f"{mod_file}::{sym_name}" if mod_file else None
+                                
+                            if base_sym:
+                                # Try full suffix if any
+                                if suffix:
+                                    full_sym = f"{base_sym}::" + "::".join(suffix)
+                                    if full_sym in all_definitions:
+                                        target_sym = full_sym
                                     else:
-                                        target_sym = mod_file
-                    else:
-                        local_target = f"{visitor.rel_path}::{callee}"
-                        if local_target in all_definitions:
-                            target_sym = local_target
-                        else:
-                            matching_syms = [s for s in all_definitions if s.startswith(f"{visitor.rel_path}::") and s.endswith(f"::{callee}")]
-                            if matching_syms:
-                                target_sym = matching_syms[0]
-                else:
-                    parts = callee.split('.', 1)
-                    obj_name = parts[0]
-                    attr_name = parts[1]
-                    
-                    if obj_name in visitor.local_scope:
-                        scope_info = visitor.local_scope[obj_name]
-                        if scope_info[0] == "module":
-                            mod_name = scope_info[1]
-                            mod_file = resolve_module_file(mod_name)
-                            if mod_file:
-                                target_sym = f"{mod_file}::{attr_name}"
-                                if target_sym not in all_definitions:
-                                    matching_syms = [s for s in all_definitions if s.startswith(f"{mod_file}::") and s.endswith(f"::{attr_name}")]
-                                    if matching_syms:
-                                        target_sym = matching_syms[0]
+                                        if base_sym in all_definitions:
+                                            target_sym = base_sym
+                                        else:
+                                            # Fallback to the module file itself if base_sym has file extension
+                                            if "::" in base_sym:
+                                                target_sym = base_sym.split("::")[0]
+                                            else:
+                                                target_sym = base_sym
+                                else:
+                                    if base_sym in all_definitions:
+                                        target_sym = base_sym
                                     else:
-                                        target_sym = mod_file
+                                        if "::" in base_sym:
+                                            target_sym = base_sym.split("::")[0]
+                                        else:
+                                            target_sym = base_sym
                                         
+                        elif match_info[0] == "module":
+                            _, level, mod_name = match_info
+                            
+                            # Try to consume suffix parts as submodules
+                            current_mod_name = mod_name
+                            current_suffix = list(suffix)
+                            resolved_mod_file = None
+                            
+                            # First, try to resolve the full module name
+                            mod_file = resolve_module_path(root_path, visitor.rel_path, current_mod_name, level)
+                            if mod_file:
+                                resolved_mod_file = mod_file
+                                
+                            # Try to extend module name with suffix parts to resolve nested submodules
+                            consumed = 0
+                            for j in range(len(suffix)):
+                                next_part = suffix[j]
+                                extended_mod_name = f"{current_mod_name}.{next_part}"
+                                next_mod_file = resolve_module_path(root_path, visitor.rel_path, extended_mod_name, level)
+                                if next_mod_file:
+                                    resolved_mod_file = next_mod_file
+                                    consumed = j + 1
+                                else:
+                                    break
+                                    
+                            if resolved_mod_file:
+                                remaining_suffix = suffix[consumed:]
+                                if remaining_suffix:
+                                    full_sym = f"{resolved_mod_file}::" + "::".join(remaining_suffix)
+                                    found = False
+                                    for k in range(len(remaining_suffix), 0, -1):
+                                        sub_sym = f"{resolved_mod_file}::" + "::".join(remaining_suffix[:k])
+                                        if sub_sym in all_definitions:
+                                            target_sym = sub_sym
+                                            found = True
+                                            break
+                                    if not found:
+                                        target_sym = resolved_mod_file
+                                else:
+                                    target_sym = resolved_mod_file
+                                    
+                # Case 3: Check if parts[0] is defined locally in the same file
+                if not target_sym:
+                    local_target = f"{visitor.rel_path}::{parts[0]}"
+                    if local_target in all_definitions:
+                        if len(parts) > 1:
+                            full_sym = f"{local_target}::" + "::".join(parts[1:])
+                            if full_sym in all_definitions:
+                                target_sym = full_sym
+                            else:
+                                target_sym = local_target
+                        else:
+                            target_sym = local_target
+                            
+                # If resolved, add edge
                 if target_sym and target_sym in all_definitions:
                     resolved_edges.append({
                         "source": caller,
@@ -756,7 +866,7 @@ def parse_python_project(root_dir):
     return all_definitions, resolved_edges
 
 def parse_non_python_project(root_dir):
-    js_extensions = ('.js', '.ts', '.jsx', '.tsx', '.go', '.rs', '.cpp', '.h', '.java')
+    js_extensions = ('.js', '.ts', '.jsx', '.tsx', '.go', '.rs', '.cpp', '.h', '.hpp', '.cc', '.cxx', '.java')
     all_definitions = {}
     edges = []
     
@@ -765,15 +875,58 @@ def parse_non_python_project(root_dir):
         '.next', '.venv', '.nuxt', 'target', 'bin', 'obj', '__pycache__', '.agents'
     }
     
-    func_pattern = re.compile(r'(?:function\s+([a-zA-Z0-9_$]+)|(?:const|let|var)\s+([a-zA-Z0-9_$]+)\s*=\s*(?:\([^)]*\)|[a-zA-Z0-9_$]+)\s*=>)')
-    class_pattern = re.compile(r'class\s+([a-zA-Z0-9_$]+)')
-    import_pattern = re.compile(r'(?:import\s+.*?\s+from\s+[\'"]([^\'"]+)[\'"]|require\(\s*[\'"]([^\'"]+)[\'"]\s*\))')
+    # Patterns per extension
+    patterns = {
+        # JS/TS
+        '.js': {
+            'funcs': [re.compile(r'(?:function\s+([a-zA-Z0-9_$]+)|(?:const|let|var)\s+([a-zA-Z0-9_$]+)\s*=\s*(?:\([^)]*\)|[a-zA-Z0-9_$]+)\s*=>)')],
+            'classes': [re.compile(r'class\s+([a-zA-Z0-9_$]+)')],
+            'imports': [re.compile(r'(?:import\s+.*?\s+from\s+[\'"]([^\'"]+)[\'"]|require\(\s*[\'"]([^\'"]+)[\'"]\s*\))')]
+        },
+        # Go
+        '.go': {
+            'funcs': [re.compile(r'func\s+([a-zA-Z0-9_]+)\s*\('), re.compile(r'func\s*\([^)]*\)\s*([a-zA-Z0-9_]+)\s*\(')],
+            'classes': [re.compile(r'type\s+([a-zA-Z0-9_]+)\s+struct')],
+            'imports': [re.compile(r'import\s+"([^"]+)"'), re.compile(r'import\s+\(\s*([\s\S]*?)\s*\)')]
+        },
+        # Rust
+        '.rs': {
+            'funcs': [re.compile(r'fn\s+([a-zA-Z0-9_]+)\s*(?:<[^>]*>)?\s*\(')],
+            'classes': [re.compile(r'(?:struct|enum|trait)\s+([a-zA-Z0-9_]+)')],
+            'imports': [re.compile(r'use\s+([^;]+);')]
+        },
+        # C/C++
+        '.cpp': {
+            'funcs': [re.compile(r'[a-zA-Z0-9_:<>]+\s+([a-zA-Z0-9_]+)\s*\([^)]*\)\s*(?:const)?\s*\{')],
+            'classes': [re.compile(r'(?:class|struct)\s+([a-zA-Z0-9_]+)')],
+            'imports': [re.compile(r'#include\s+["<]([^">]+)[">]')]
+        },
+        # Java
+        '.java': {
+            'funcs': [re.compile(r'(?:public|protected|private|static|\s)+[a-zA-Z0-9_<>@]+\s+([a-zA-Z0-9_]+)\s*\([^)]*\)\s*(?:throws\s+[a-zA-Z0-9_,\s]+)?\s*\{')],
+            'classes': [re.compile(r'(?:class|interface|enum)\s+([a-zA-Z0-9_]+)')],
+            'imports': [re.compile(r'import\s+([^;]+);')]
+        }
+    }
+    
+    # Map other extensions to the base ones
+    ext_map = {
+        '.ts': '.js', '.jsx': '.js', '.tsx': '.js',
+        '.h': '.cpp', '.hpp': '.cpp', '.cc': '.cpp', '.cxx': '.cpp'
+    }
     
     for dirpath, dirnames, filenames in os.walk(root_dir):
         dirnames[:] = [d for d in dirnames if d not in ignore_dirs and not d.startswith('.')]
         
         for f in filenames:
-            if f.endswith(js_extensions):
+            _, ext = os.path.splitext(f)
+            ext = ext.lower()
+            if ext in js_extensions:
+                base_ext = ext_map.get(ext, ext)
+                lang_pat = patterns.get(base_ext)
+                if not lang_pat:
+                    continue
+                    
                 filepath = os.path.join(dirpath, f)
                 rel_path = os.path.relpath(filepath, root_dir).replace('\\', '/')
                 
@@ -790,50 +943,127 @@ def parse_non_python_project(root_dir):
                     
                     local_definitions = []
                     
-                    for match in func_pattern.finditer(file_content):
-                        name = match.group(1) or match.group(2)
-                        if name:
-                            sym = f"{rel_path}::{name}"
-                            all_definitions[sym] = {
-                                "type": "function",
-                                "label": name,
-                                "file": rel_path
-                            }
-                            local_definitions.append(sym)
-                            
-                    for match in class_pattern.finditer(file_content):
-                        name = match.group(1)
-                        if name:
-                            sym = f"{rel_path}::{name}"
-                            all_definitions[sym] = {
-                                "type": "class",
-                                "label": name,
-                                "file": rel_path
-                            }
-                            local_definitions.append(sym)
-                            
-                    imported_files = []
-                    for match in import_pattern.finditer(file_content):
-                        imp_path = match.group(1) or match.group(2)
-                        if imp_path:
-                            curr_dir = os.path.dirname(rel_path)
-                            resolved_rel = os.path.normpath(os.path.join(curr_dir, imp_path)).replace('\\', '/')
-                            
-                            possible_files = [
-                                resolved_rel,
-                                f"{resolved_rel}.ts",
-                                f"{resolved_rel}.tsx",
-                                f"{resolved_rel}.js",
-                                f"{resolved_rel}.jsx",
-                                f"{resolved_rel}/index.ts",
-                                f"{resolved_rel}/index.js",
-                            ]
-                            for p_file in possible_files:
-                                if os.path.exists(os.path.join(root_dir, p_file)):
-                                    imported_files.append(p_file)
+                    # 1. Match functions
+                    for pat in lang_pat['funcs']:
+                        for match in pat.finditer(file_content):
+                            name = None
+                            for g in match.groups():
+                                if g:
+                                    name = g.strip()
                                     break
-                                    
-                    for imp_file in imported_files:
+                            if name:
+                                sym = f"{rel_path}::{name}"
+                                all_definitions[sym] = {
+                                    "type": "function",
+                                    "label": name,
+                                    "file": rel_path
+                                }
+                                local_definitions.append(sym)
+                                
+                    # 2. Match classes / structs / types
+                    for pat in lang_pat['classes']:
+                        for match in pat.finditer(file_content):
+                            name = match.group(1).strip() if match.group(1) else None
+                            if name:
+                                sym = f"{rel_path}::{name}"
+                                all_definitions[sym] = {
+                                    "type": "class",
+                                    "label": name,
+                                    "file": rel_path
+                                }
+                                local_definitions.append(sym)
+                                
+                    # 3. Match imports / includes / uses
+                    imported_files = []
+                    for pat in lang_pat['imports']:
+                        for match in pat.finditer(file_content):
+                            imp_raw = match.group(1)
+                            if not imp_raw:
+                                continue
+                            
+                            # Parse multiple imports if it's block format (Go import block)
+                            imports_list = []
+                            if base_ext == '.go' and '(' in match.group(0):
+                                for line in imp_raw.split('\n'):
+                                    line_clean = line.strip().strip('"')
+                                    if line_clean and not line_clean.startswith('//'):
+                                        imports_list.append(line_clean)
+                            else:
+                                imports_list.append(imp_raw.strip().strip('"').strip("'"))
+                                
+                            for imp_path in imports_list:
+                                if base_ext == '.js':
+                                    curr_dir = os.path.dirname(rel_path)
+                                    resolved_rel = os.path.normpath(os.path.join(curr_dir, imp_path)).replace('\\', '/')
+                                    possible_files = [
+                                        resolved_rel,
+                                        f"{resolved_rel}.ts",
+                                        f"{resolved_rel}.tsx",
+                                        f"{resolved_rel}.js",
+                                        f"{resolved_rel}.jsx",
+                                        f"{resolved_rel}/index.ts",
+                                        f"{resolved_rel}/index.js",
+                                    ]
+                                    for p_file in possible_files:
+                                        if os.path.exists(os.path.join(root_dir, p_file)):
+                                            imported_files.append(p_file)
+                                            break
+                                            
+                                elif base_ext == '.cpp':
+                                    curr_dir = os.path.dirname(rel_path)
+                                    p_file = os.path.normpath(os.path.join(curr_dir, imp_path)).replace('\\', '/')
+                                    if os.path.exists(os.path.join(root_dir, p_file)):
+                                        imported_files.append(p_file)
+                                    else:
+                                        base_header = os.path.basename(imp_path)
+                                        for root, dirs, files in os.walk(root_dir):
+                                            dirs[:] = [d for d in dirs if d not in ignore_dirs and not d.startswith('.')]
+                                            if base_header in files:
+                                                found_p = os.path.relpath(os.path.join(root, base_header), root_dir).replace('\\', '/')
+                                                imported_files.append(found_p)
+                                                break
+                                                
+                                elif base_ext == '.go':
+                                    parts_go = imp_path.split('/')
+                                    for idx in range(len(parts_go)):
+                                        candidate = '/'.join(parts_go[idx:])
+                                        cand_dir = os.path.join(root_dir, candidate)
+                                        if os.path.isdir(cand_dir):
+                                            for f_go in os.listdir(cand_dir):
+                                                if f_go.endswith('.go'):
+                                                    imported_files.append(f"{candidate}/{f_go}".replace('\\', '/'))
+                                            break
+                                            
+                                elif base_ext == '.rs':
+                                    rs_path = imp_path.replace('::', '/')
+                                    prefixes = ['crate/', 'super/', 'self/']
+                                    for pref in prefixes:
+                                        if rs_path.startswith(pref):
+                                            rs_path = rs_path[len(pref):]
+                                    possible_files = [
+                                        f"{rs_path}.rs",
+                                        f"{rs_path}/mod.rs",
+                                        f"src/{rs_path}.rs",
+                                        f"src/{rs_path}/mod.rs",
+                                    ]
+                                    for p_file in possible_files:
+                                        if os.path.exists(os.path.join(root_dir, p_file)):
+                                            imported_files.append(p_file)
+                                            break
+                                            
+                                elif base_ext == '.java':
+                                    java_path = imp_path.replace('.', '/')
+                                    possible_files = [
+                                        f"{java_path}.java",
+                                        f"src/main/java/{java_path}.java",
+                                        f"src/{java_path}.java",
+                                    ]
+                                    for p_file in possible_files:
+                                        if os.path.exists(os.path.join(root_dir, p_file)):
+                                            imported_files.append(p_file)
+                                            break
+                                            
+                    for imp_file in list(set(imported_files)):
                         edges.append({
                             "source": file_sym,
                             "target": imp_file,
