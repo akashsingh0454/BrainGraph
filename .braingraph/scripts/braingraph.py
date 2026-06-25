@@ -1729,18 +1729,199 @@ Below was the active task state at the time of handoff:
         
     stop_watchdog()
 
+def markdown_to_html(md_text):
+    if not md_text:
+        return ""
+    html_lines = []
+    in_list = False
+    for line in md_text.splitlines():
+        line_strip = line.strip()
+        if not line_strip:
+            if in_list:
+                html_lines.append("</ul>")
+                in_list = False
+            continue
+            
+        if line_strip.startswith("# "):
+            if in_list:
+                html_lines.append("</ul>")
+                in_list = False
+            html_lines.append(f"<h1>{line_strip[2:]}</h1>")
+        elif line_strip.startswith("## "):
+            if in_list:
+                html_lines.append("</ul>")
+                in_list = False
+            html_lines.append(f"<h2>{line_strip[3:]}</h2>")
+        elif line_strip.startswith("### "):
+            if in_list:
+                html_lines.append("</ul>")
+                in_list = False
+            html_lines.append(f"<h3>{line_strip[4:]}</h3>")
+        elif line_strip.startswith("- "):
+            if not in_list:
+                html_lines.append("<ul>")
+                in_list = True
+            content = line_strip[2:]
+            if content.startswith("[ ]") or content.startswith("[x]") or content.startswith("[/]"):
+                status = content[1]
+                text = content[4:].strip()
+                checked = "checked" if status == "x" else ""
+                if status == "/":
+                    html_lines.append(f"<li><input type='checkbox' disabled style='margin-right: 0.5rem;'><span style='color: var(--accent-amber); font-weight: 500;'>[/] {text}</span></li>")
+                else:
+                    html_lines.append(f"<li><input type='checkbox' {checked} disabled style='margin-right: 0.5rem;'>{text}</li>")
+            else:
+                html_lines.append(f"<li>{content}</li>")
+        else:
+            if in_list:
+                html_lines.append("</ul>")
+                in_list = False
+            html_lines.append(f"<p>{line_strip}</p>")
+    if in_list:
+        html_lines.append("</ul>")
+    return "\n".join(html_lines)
+
+import http.server
+import socketserver
+
+class DashboardHandler(http.server.BaseHTTPRequestHandler):
+    def log_message(self, format, *args):
+        # Suppress request logging to keep the console output clean
+        pass
+        
+    def do_GET(self):
+        if self.path == "/":
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.end_headers()
+            html_path = Path(__file__).parent / "dashboard.html"
+            if html_path.exists():
+                self.wfile.write(html_path.read_bytes())
+            else:
+                self.wfile.write(b"<h1>Dashboard file not found</h1>")
+        elif self.path == "/api/status":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            
+            root = Path.cwd()
+            sb_dir = root / ".braingraph"
+            
+            at_content = ""
+            at_file = sb_dir / "active_task.md"
+            if at_file.exists():
+                at_content = at_file.read_text(encoding="utf-8")
+                
+            at_html = markdown_to_html(at_content)
+            
+            staged, unstaged, untracked = scan_git_status()
+            recent_files = scan_recent_files(root)
+            
+            graph = load_code_graph(root)
+            modified_files = list(set([x[1] for x in staged + unstaged] + untracked))
+            for rf, t in recent_files:
+                modified_files.append(rf)
+            modified_files = list(set(modified_files))
+            
+            affected_symbols, mermaid_diagram = analyze_downstream_impact(graph, modified_files)
+            
+            db = load_agents_db()
+            usage = calculate_agent_usage(root)
+            
+            status_data = {
+                "active_task_html": at_html,
+                "staged": staged,
+                "unstaged": unstaged,
+                "untracked": untracked,
+                "agents": db.get("agents", {}),
+                "usage": usage,
+                "mermaid_diagram": mermaid_diagram
+            }
+            self.wfile.write(json.dumps(status_data).encode("utf-8"))
+        else:
+            self.send_response(404)
+            self.end_headers()
+            self.wfile.write(b"Not Found")
+            
+    def do_POST(self):
+        if self.path == "/api/toggle_agent":
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data.decode('utf-8'))
+            
+            name = data.get("name")
+            new_status = data.get("status")
+            
+            db = load_agents_db()
+            if name in db.get("agents", {}):
+                db["agents"][name]["status"] = new_status
+                db["agents"][name]["last_updated"] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                save_agents_db(db)
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b'{"success":true}')
+            else:
+                self.send_response(400)
+                self.end_headers()
+        elif self.path == "/api/reset_offsets":
+            db = load_agents_db()
+            for name in db.get("agents", {}):
+                db["agents"][name]["manual_offset"] = 0
+            save_agents_db(db)
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b'{"success":true}')
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+def cmd_dashboard():
+    import webbrowser
+    import time
+    import threading
+    
+    port = 9090
+    server_address = ('', port)
+    
+    class ThreadingHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
+        daemon_threads = True
+        
+    try:
+        httpd = ThreadingHTTPServer(server_address, DashboardHandler)
+        print(f"==================================================")
+        print(f"BRAINGRAPH WEB DASHBOARD")
+        print(f"==================================================")
+        print(f"  Local Control Panel: http://localhost:{port}")
+        print(f"  Press Ctrl+C to stop the server.")
+        print(f"==================================================")
+        
+        def open_browser():
+            time.sleep(0.5)
+            webbrowser.open(f"http://localhost:{port}")
+            
+        threading.Thread(target=open_browser, daemon=True).start()
+        
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\nDashboard server stopped.")
+        sys.exit(0)
+    except Exception as e:
+        print(f"Error starting dashboard: {e}")
+        sys.exit(1)
+
 def main():
     if len(sys.argv) < 2:
         print("==================================================")
         print("BRAINGRAPH CLI: Contextual Multi-Agent Handoff")
         print("==================================================")
-        print("Usage: python braingraph.py [init | start <task> | resume | handoff | agents | register [pid] | watchdog]")
+        print("Usage: python braingraph.py [init | start <task> | resume | handoff | agents | dashboard | register [pid] | watchdog]")
         print("\nCommands:")
         print("  init            Initialize configurations for all supported AI agents")
         print("  start <task>    Initialize a new active task")
         print("  resume          Scan changes & local history to compile context for next agent")
         print("  handoff         Generate a handoff document and archive current state")
         print("  agents          Display interactive usage menu and agent status")
+        print("  dashboard       Launch the local Web UI Control Panel dashboard")
         print("  register [pid]  Register the parent shell or agent process PID")
         print("  watchdog        Start the background monitoring watchdog")
         sys.exit(1)
@@ -1760,6 +1941,8 @@ def main():
         cmd_handoff()
     elif cmd == "agents":
         cmd_agents()
+    elif cmd == "dashboard":
+        cmd_dashboard()
     elif cmd == "register":
         pid_val = sys.argv[2] if len(sys.argv) > 2 else None
         cmd_register(pid_val)

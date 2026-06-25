@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrainGraph Control Panel</title>
+    <!-- Premium Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Mermaid CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+    </script>
+    <style>
+        :root {
+            --bg-base: #0b0f19;
+            --bg-card: rgba(17, 24, 39, 0.7);
+            --bg-card-hover: rgba(31, 41, 55, 0.8);
+            --border-glow: rgba(59, 130, 246, 0.3);
+            --accent-primary: #3b82f6;
+            --accent-green: #10b981;
+            --accent-green-glow: rgba(16, 185, 129, 0.2);
+            --accent-red: #ef4444;
+            --accent-red-glow: rgba(239, 68, 68, 0.2);
+            --accent-amber: #f59e0b;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --glass-blur: blur(12px);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem;
+            background-image: 
+                radial-gradient(at 10% 10%, rgba(30, 58, 138, 0.3) 0px, transparent 50%),
+                radial-gradient(at 90% 90%, rgba(6, 78, 59, 0.3) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        header h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .status-badge {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid var(--accent-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--accent-green);
+            box-shadow: 0 0 8px var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(59, 130, 246, 0.2);
+            box-shadow: 0 10px 40px rgba(59, 130, 246, 0.1);
+        }
+
+        .card-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Span settings */
+        .col-12 { grid-column: span 12; }
+        .col-8 { grid-column: span 8; }
+        .col-4 { grid-column: span 4; }
+
+        @media (max-width: 1024px) {
+            .col-8, .col-4 { grid-column: span 12; }
+        }
+
+        /* Active Task Card Styling */
+        #active-task-container {
+            line-height: 1.6;
+        }
+        #active-task-container h1, #active-task-container h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+        #active-task-container h1 { font-size: 1.5rem; }
+        #active-task-container h2 { font-size: 1.2rem; }
+        #active-task-container ul {
+            list-style-position: inside;
+            margin-left: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        #active-task-container li {
+            margin-bottom: 0.25rem;
+            color: var(--text-main);
+        }
+
+        /* Agent Cards */
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .agent-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .agent-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .agent-card.available::before { background-color: var(--accent-green); }
+        .agent-card.exhausted::before { background-color: var(--accent-red); }
+        .agent-card.active::before { background-color: var(--accent-primary); }
+
+        .agent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .agent-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .agent-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .agent-badge.available { background: var(--accent-green-glow); color: var(--accent-green); }
+        .agent-badge.exhausted { background: var(--accent-red-glow); color: var(--accent-red); }
+        .agent-badge.active { background: rgba(59, 130, 246, 0.2); color: var(--accent-primary); }
+
+        .agent-info {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .agent-info p {
+            margin-bottom: 0.25rem;
+        }
+
+        .agent-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Toggle switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: .4s;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent-green-glow);
+            border-color: var(--accent-green);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+            background-color: var(--accent-green);
+        }
+
+        /* Buttons */
+        .btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 500;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-danger:hover {
+            border-color: var(--accent-red);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
+        }
+
+        /* File list */
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .file-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .file-badge {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .file-badge.staged { background: var(--accent-green-glow); color: var(--accent-green); }
+        .file-badge.unstaged { background: var(--accent-red-glow); color: var(--accent-red); }
+        .file-badge.untracked { background: rgba(59, 130, 246, 0.2); color: var(--accent-primary); }
+
+        /* Mermaid Graph styling */
+        .mermaid-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            min-height: 250px;
+            overflow-x: auto;
+        }
+
+        .mermaid-empty {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle;">
+                    <path d="M16 2C8.268 2 2 8.268 2 16C2 23.732 8.268 30 16 30C23.732 30 30 23.732 30 16C30 8.268 23.732 2 16 2ZM18 24H14V20H18V24ZM18 18H14V8H18V18Z" fill="url(#paint0_linear)"/>
+                    <defs>
+                        <linearGradient id="paint0_linear" x1="2" y1="2" x2="30" y2="30" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#60A5FA"/>
+                            <stop offset="1" stop-color="#34D399"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                BrainGraph Control Panel
+            </h1>
+            <div class="status-badge">
+                <span class="status-indicator"></span>
+                <span>Watchdog Running</span>
+            </div>
+        </header>
+
+        <main class="dashboard-grid">
+            <!-- Active Task Details -->
+            <section class="card col-8">
+                <h2 class="card-title">Active Task Details</h2>
+                <div id="active-task-container">
+                    <p style="color: var(--text-muted); font-style: italic;">Loading active task...</p>
+                </div>
+            </section>
+
+            <!-- Workspace Modifications -->
+            <section class="card col-4">
+                <h2 class="card-title">Workspace Changes</h2>
+                <div id="workspace-container">
+                    <p style="color: var(--text-muted); font-style: italic;">Loading workspace changes...</p>
+                </div>
+            </section>
+
+            <!-- Downstream Dependency Diagram -->
+            <section class="card col-12">
+                <h2 class="card-title">Downstream Dependency Map</h2>
+                <div id="mermaid-root" class="mermaid-container">
+                    <p class="mermaid-empty">No downstream callflow dependencies mapped. Edit a file to generate a map.</p>
+                </div>
+            </section>
+
+            <!-- Agent Usage Console -->
+            <section class="card col-12">
+                <h2 class="card-title">
+                    Agent Usage Console
+                    <button class="btn btn-danger" onclick="resetOffsets()">Reset All Offsets</button>
+                </h2>
+                <div id="agents-container" class="agent-grid">
+                    <p style="color: var(--text-muted); font-style: italic;">Loading agent stats...</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let lastMermaidText = "";
+
+        async function fetchStatus() {
+            try {
+                const response = await fetch('/api/status');
+                if (!response.ok) throw new Error('API server unreachable');
+                const data = await response.json();
+                
+                updateActiveTask(data.active_task_html);
+                updateWorkspaceChanges(data.staged, data.unstaged, data.untracked);
+                updateAgents(data.agents, data.usage);
+                updateDependencyGraph(data.mermaid_diagram);
+            } catch (err) {
+                console.error("Status fetch failed:", err);
+            }
+        }
+
+        function updateActiveTask(html) {
+            const container = document.getElementById('active-task-container');
+            if (html && html.trim()) {
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = `<p style="color: var(--text-muted); font-style: italic;">No active task loaded.</p>`;
+            }
+        }
+
+        function updateWorkspaceChanges(staged, unstaged, untracked) {
+            const container = document.getElementById('workspace-container');
+            let content = '';
+
+            const hasChanges = (staged && staged.length) || (unstaged && unstaged.length) || (untracked && untracked.length);
+
+            if (!hasChanges) {
+                container.innerHTML = `<p style="color: var(--text-muted); font-style: italic;">Workspace is clean. No modifications detected.</p>`;
+                return;
+            }
+
+            content += '<div class="file-list">';
+            if (staged) {
+                staged.forEach(f => {
+                    content += `<div class="file-item"><span>${f[1]}</span><span class="file-badge staged">Staged [${f[0]}]</span></div>`;
+                });
+            }
+            if (unstaged) {
+                unstaged.forEach(f => {
+                    content += `<div class="file-item"><span>${f[1]}</span><span class="file-badge unstaged">Unstaged [${f[0]}]</span></div>`;
+                });
+            }
+            if (untracked) {
+                untracked.forEach(f => {
+                    content += `<div class="file-item"><span>${f}</span><span class="file-badge untracked">Untracked</span></div>`;
+                });
+            }
+            content += '</div>';
+            container.innerHTML = content;
+        }
+
+        function updateAgents(agents, usage) {
+            const container = document.getElementById('agents-container');
+            if (!agents) return;
+
+            let html = '';
+            const sortedNames = Object.keys(agents).sort();
+
+            sortedNames.forEach(name => {
+                const info = agents[name];
+                const status = info.status || 'Available';
+                const limitType = info.limit_type || '';
+                const maxLim = info.max_limit;
+                
+                const currentUsage = (usage[name] || 0) + (info.manual_offset || 0);
+                const limitStr = maxLim ? ` / ${maxLim} msgs` : ' (No Limit)';
+                
+                const cardClass = status.toLowerCase();
+                const isChecked = status === 'Available' || status === 'Active';
+
+                html += `
+                    <div class="agent-card ${cardClass}">
+                        <div class="agent-header">
+                            <span class="agent-name">${name}</span>
+                            <span class="agent-badge ${cardClass}">${status}</span>
+                        </div>
+                        <div class="agent-info">
+                            <p><strong>Usage:</strong> ${currentUsage}${limitStr}</p>
+                            <p><strong>Quota:</strong> ${limitType}</p>
+                        </div>
+                        <div class="agent-actions">
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">Available</span>
+                            <label class="switch">
+                                <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleAgent('${name}', '${status}')">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function updateDependencyGraph(mermaidCode) {
+            const container = document.getElementById('mermaid-root');
+            if (!mermaidCode || !mermaidCode.trim()) {
+                container.innerHTML = `<p class="mermaid-empty">No downstream callflow dependencies mapped. Edit a file to generate a map.</p>`;
+                lastMermaidText = "";
+                return;
+            }
+
+            // Only redraw if the mermaid content has changed
+            if (mermaidCode === lastMermaidText) return;
+            lastMermaidText = mermaidCode;
+
+            // Strip markdown block symbols if present
+            let cleanCode = mermaidCode.trim();
+            if (cleanCode.startsWith("```mermaid")) {
+                cleanCode = cleanCode.substring(10);
+            }
+            if (cleanCode.endsWith("```")) {
+                cleanCode = cleanCode.substring(0, cleanCode.length - 3);
+            }
+            cleanCode = cleanCode.trim();
+
+            const uniqueId = 'mermaid-svg-' + Math.floor(Math.random() * 1000000);
+            container.innerHTML = `<div id="${uniqueId}" class="mermaid">${cleanCode}</div>`;
+            
+            try {
+                mermaid.render(uniqueId + '-render', cleanCode).then(({ svg }) => {
+                    const el = document.getElementById(uniqueId);
+                    if (el) el.innerHTML = svg;
+                });
+            } catch (err) {
+                console.error("Mermaid render error:", err);
+                container.innerHTML = `<p class="mermaid-empty" style="color: var(--accent-red);">Failed to render dependency map. Check syntax.</p>`;
+            }
+        }
+
+        async function toggleAgent(name, currentStatus) {
+            try {
+                const newStatus = (currentStatus === 'Available' || currentStatus === 'Active') ? 'Exhausted' : 'Available';
+                const response = await fetch('/api/toggle_agent', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, status: newStatus })
+                });
+                if (response.ok) fetchStatus();
+            } catch (err) {
+                console.error("Failed to toggle agent:", err);
+            }
+        }
+
+        async function resetOffsets() {
+            try {
+                const response = await fetch('/api/reset_offsets', { method: 'POST' });
+                if (response.ok) fetchStatus();
+            } catch (err) {
+                console.error("Failed to reset offsets:", err);
+            }
+        }
+
+        // Initialize and poll every 3 seconds
+        fetchStatus();
+        setInterval(fetchStatus, 3000);
+    </script>
+</body>
+</html>

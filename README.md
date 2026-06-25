@@ -17,6 +17,35 @@ BrainGraph operates on three distinct layers:
 
 ---
 
+## Installation & Quick Start
+
+1. **Clone & Setup**:
+   Clone the repository into your workspace:
+   ```bash
+   git clone https://github.com/akashsingh0454/BrainGraph.git
+   ```
+
+2. **Initialize BrainGraph**:
+   Navigate to your project root and initialize the control configurations and agent rules:
+   ```bash
+   python .braingraph/scripts/braingraph.py init
+   ```
+   This generates rule files (`CLAUDE.md`, `.cursorrules`, etc.) customized for all major AI coding agents.
+
+3. **Start a Task**:
+   Begin tracking a new task (launches the background watchdog daemon):
+   ```bash
+   python .braingraph/scripts/braingraph.py start "Your Task Description"
+   ```
+
+4. **Launch the Dashboard**:
+   Open the Web Control Panel (on port `9090`) to visually monitor your workspace, active task, and downstream AST dependencies in real-time:
+   ```bash
+   python .braingraph/scripts/braingraph.py dashboard
+   ```
+
+---
+
 ## Key Features
 
 ### 1. Downstream Impact Profiling
